@@ -1,0 +1,15 @@
+[package]
+name = "rust-utils"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+members = ["crates/*"]
+
+
+[features]
+default=["common"]
+
+[dependencies]
+blockchain = {path = "crates/blockchain", optional = true}
+common = {path = "crates/common", optional = true}
