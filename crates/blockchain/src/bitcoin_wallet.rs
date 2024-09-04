@@ -2,6 +2,9 @@ use bitcoin::key::Secp256k1;
 use bitcoin::{Address, Network, PrivateKey, PublicKey};
 use sha2::{Digest, Sha256};
 use std::str::FromStr;
+use anyhow::{bail, ensure};
+use serde_json::Value;
+
 pub fn gen_btc_address(private_key: &str) ->String{
     let secp = Secp256k1::new();
 
@@ -41,6 +44,24 @@ pub fn private_key_to_wif(private_key_hex: &str) -> String {
     bs58::encode(private_key_bytes).into_string()
 }
 
+
+async fn query_btc_balance(address: &str) ->anyhow::Result<f64>{
+    ensure!(address!="");
+
+    let url = format!("https://blockchain.info/balance?active={}", address);
+
+    let client = reqwest::Client::new();
+    let response = client.get(&url).send().await?;
+    let body = response.text().await?;
+    let json: Value = serde_json::from_str(&body)?;
+
+    if let Some(balance) = json[address]["final_balance"].as_u64() {
+
+        Ok((balance as f64) / 100_000_000.0)
+    } else {
+        bail!("无法获取余额信息");
+    }
+}
 
 
 #[cfg(test)]
