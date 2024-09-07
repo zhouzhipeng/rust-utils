@@ -16,7 +16,7 @@ pub struct RawData{
 
 
 pub trait IData {
-    type Model: Serialize+for<'de>  Deserialize<'de>;
+    type Model: Serialize+for<'de>  Deserialize<'de>+Clone;
 
     fn get_host(&self) -> &'static str;
 
@@ -82,7 +82,7 @@ pub trait IData {
             bail!(response.text().await?)
         }
     }
-    async fn query_by_id(&self, id: i64) -> anyhow::Result<Vec<Self::Model>> {
+    async fn get(&self, id: i64) -> anyhow::Result<Self::Model> {
         ensure!(!self.get_category().is_empty());
         let client = self.get_client()?;
 
@@ -92,18 +92,20 @@ pub trait IData {
             let r: Vec<RawData> = response.json().await?;
 
             let data_list = r.iter().map(|m| serde_json::from_str::<Self::Model>(&m.data).unwrap()).collect::<Vec<Self::Model>>();
-
-            Ok(data_list)
+            if data_list.is_empty(){
+                bail!("id : {} not found!" , id)
+            }
+            Ok(data_list[0].clone())
 
         }else{
             bail!(response.text().await?)
         }
     }
-    async fn query_by_category(&self, category: &str, limit: u32) -> anyhow::Result<Vec<Self::Model>> {
+    async fn list(&self, limit: u32) -> anyhow::Result<Vec<Self::Model>> {
         ensure!(!self.get_category().is_empty());
         let client = self.get_client()?;
 
-        let response = client.get(format!("{}/data/cat/{}", self.get_host(), category))
+        let response = client.get(format!("{}/data/cat/{}", self.get_host(), self.get_category()))
             .query(&[("_limit", limit)])
             .send().await?;
         if response.status().is_success(){

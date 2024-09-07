@@ -7,7 +7,7 @@ mod tests {
     use crate::data::IData;
     use super::*;
 
-    #[derive(Serialize, Deserialize, Debug)]
+    #[derive(Serialize, Deserialize, Debug, Clone)]
     struct Demo{
         id : i32,
         name: String,
@@ -62,7 +62,7 @@ mod tests {
     #[tokio::test]
     async fn test_query_by_id()->anyhow::Result<()> {
         let api = DemoAPI;
-        let r = api.query_by_id(503).await?;
+        let r = api.get(500).await?;
         println!("{:?}", r);
 
         Ok(())
@@ -70,7 +70,7 @@ mod tests {
     #[tokio::test]
     async fn test_query_by_category()->anyhow::Result<()> {
         let api = DemoAPI;
-        let r = api.query_by_category("demo", 1).await?;
+        let r = api.list(100).await?;
         println!("{:?}", r);
 
         Ok(())
