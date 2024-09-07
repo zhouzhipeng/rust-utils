@@ -19,8 +19,7 @@ mod tests {
         type Model = Demo;
 
         fn get_host(&self) -> &'static str {
-            // "http://127.0.0.1:9000"
-            "https://zhouzhipeng.com"
+            "http://127.0.0.1:9000"
         }
 
         fn get_category(&self) -> &'static str {
