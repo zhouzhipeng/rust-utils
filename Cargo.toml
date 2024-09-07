@@ -13,3 +13,4 @@ default=["common"]
 [dependencies]
 blockchain = {path = "crates/blockchain", optional = true}
 common = {path = "crates/common", optional = true}
+data-api = {path = "crates/data-api", optional = true}

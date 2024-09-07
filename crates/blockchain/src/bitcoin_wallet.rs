@@ -45,7 +45,7 @@ pub fn private_key_to_wif(private_key_hex: &str) -> String {
 }
 
 
-async fn query_btc_balance(address: &str) ->anyhow::Result<f64>{
+pub async fn query_btc_balance(address: &str) ->anyhow::Result<f64>{
     ensure!(address!="");
 
     let url = format!("https://blockchain.info/balance?active={}", address);
