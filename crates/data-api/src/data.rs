@@ -24,6 +24,10 @@ pub trait IData {
     /// under which category your data should put in. like a table name.
     fn get_category(&self) -> &'static str;
 
+
+    /// used to authenticate
+    fn get_auth_key(&self) -> &'static str;
+
     fn get_client(&self) -> anyhow::Result<Client> {
         Ok(Client::builder().timeout(Duration::from_secs(3)).build().context("failed to build client")?)
     }
@@ -32,7 +36,9 @@ pub trait IData {
         ensure!(!self.get_category().is_empty());
         let client = self.get_client()?;
 
-        let response = client.post(format!("{}/data/cat/{}", self.get_host(), self.get_category())).json(data).send().await?;
+        let response = client.post(format!("{}/data/cat/{}", self.get_host(), self.get_category()))
+            .header("X-Browser-Fingerprint", self.get_auth_key())
+            .json(data).send().await?;
         if response.status().is_success(){
             let r: Vec<RawData> = response.json().await?;
             Ok(r[0].clone())
@@ -45,7 +51,8 @@ pub trait IData {
         ensure!(!self.get_category().is_empty());
         let client = self.get_client()?;
 
-        let response = client.delete(format!("{}/data/id/{}", self.get_host(), id)).send().await?;
+        let response = client.delete(format!("{}/data/id/{}", self.get_host(), id))
+            .header("X-Browser-Fingerprint", self.get_auth_key()).send().await?;
         if response.status().is_success(){
             let r: Vec<RawData> = response.json().await?;
             Ok(r[0].clone())
@@ -59,6 +66,7 @@ pub trait IData {
         let client = self.get_client()?;
 
         let response = client.put(format!("{}/data/id/{}", self.get_host(), id))
+            .header("X-Browser-Fingerprint", self.get_auth_key())
             .json(data)
             .send().await?;
         if response.status().is_success(){
@@ -74,6 +82,7 @@ pub trait IData {
 
         let response = client.patch(format!("{}/data/id/{}", self.get_host(), id))
             .query(&[field_param])
+            .header("X-Browser-Fingerprint", self.get_auth_key())
             .send().await?;
         if response.status().is_success(){
             let r: Vec<RawData> = response.json().await?;
@@ -87,6 +96,7 @@ pub trait IData {
         let client = self.get_client()?;
 
         let response = client.get(format!("{}/data/id/{}", self.get_host(), id))
+            .header("X-Browser-Fingerprint", self.get_auth_key())
             .send().await?;
         if response.status().is_success(){
             let r: Vec<RawData> = response.json().await?;
@@ -107,6 +117,7 @@ pub trait IData {
 
         let response = client.get(format!("{}/data/cat/{}", self.get_host(), self.get_category()))
             .query(&[("_limit", limit)])
+            .header("X-Browser-Fingerprint", self.get_auth_key())
             .send().await?;
         if response.status().is_success(){
             let r: Vec<RawData> = response.json().await?;
