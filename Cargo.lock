@@ -161,7 +161,7 @@ dependencies = [
  "base64",
  "bitcoin",
  "bs58",
- "common",
+ "common-crypt",
  "ethereum-types",
  "hex",
  "log",
@@ -221,7 +221,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
-name = "common"
+name = "common-crypt"
 version = "0.1.0"
 dependencies = [
  "base64",
@@ -1119,7 +1119,7 @@ name = "rust-utils"
 version = "0.1.0"
 dependencies = [
  "blockchain",
- "common",
+ "common-crypt",
  "data-api",
 ]
 
@@ -1361,6 +1361,23 @@ name = "spin"
 version = "0.9.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6980e8d7511241f8acf4aebddbb1ff938df5eebe98691418c4468d0b72a96a67"
+
+[[package]]
+name = "sql-util"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "sqlparser",
+]
+
+[[package]]
+name = "sqlparser"
+version = "0.40.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7c80afe31cdb649e56c0d9bb5503be9166600d68a852c38dd445636d126858e5"
+dependencies = [
+ "log",
+]
 
 [[package]]
 name = "static_assertions"

@@ -1,0 +1,8 @@
+[package]
+name = "sql-util"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sqlparser = { version = "0.40.0"}
+anyhow = "1"
