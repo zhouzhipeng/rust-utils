@@ -1121,6 +1121,7 @@ dependencies = [
  "blockchain",
  "common-crypt",
  "data-api",
+ "sql-util",
 ]
 
 [[package]]

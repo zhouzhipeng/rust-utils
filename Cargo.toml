@@ -14,3 +14,4 @@ default=[]
 blockchain = {path = "crates/blockchain", optional = true}
 common-crypt = {path = "crates/common-crypt", optional = true}
 data-api = {path = "crates/data-api", optional = true}
+sql-util = {path = "crates/sql-util", optional = true}
