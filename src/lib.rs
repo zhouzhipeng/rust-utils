@@ -4,5 +4,5 @@ pub use common_crypt::*;
 pub use blockchain::*;
 #[cfg(feature = "data-api")]
 pub use data_api::*;
-// #[cfg(feature = "sql-util")]
-// pub use sql_util::*;
+#[cfg(feature = "sql-util")]
+pub use sql_util::*;
