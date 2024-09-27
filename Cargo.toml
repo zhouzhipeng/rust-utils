@@ -1,17 +1,3 @@
-[package]
-name = "rust-utils"
-version = "0.1.0"
-edition = "2021"
-
 [workspace]
+resolver="2"
 members = ["crates/*"]
-
-
-[features]
-default=[]
-
-[dependencies]
-blockchain = {path = "crates/blockchain", optional = true}
-common-crypt = {path = "crates/common-crypt", optional = true}
-data-api = {path = "crates/data-api", optional = true}
-sql-util = {path = "crates/sql-util", optional = true}
