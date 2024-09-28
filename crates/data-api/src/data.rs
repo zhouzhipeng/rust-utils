@@ -34,10 +34,10 @@ where T :  Serialize+for<'de>  Deserialize<'de>+Clone{
 impl<T> DataAPI<T>
 where T :  Serialize+for<'de>  Deserialize<'de>+Clone
 {
-    pub fn new(host: String, category: String, auth_key: Option<String>)->Self{
+    pub fn new(host: &str, category: &str, auth_key: Option<String>)->Self{
         Self{
-            host,
-            category,
+            host: host.to_string(),
+            category: category.to_string(),
             auth_key,
             phantom_data: Default::default(),
         }
