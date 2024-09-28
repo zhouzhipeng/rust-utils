@@ -1,3 +1,4 @@
+use std::marker::PhantomData;
 use anyhow::{anyhow, bail, ensure, Context};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
@@ -19,19 +20,37 @@ impl RawData {
     }
 }
 
-
-pub trait IData {
-    type Model: Serialize+for<'de>  Deserialize<'de>+Clone;
-
-    fn get_host() -> &'static str;
-
-
-    /// under which category your data should put in. like a table name.
-    fn get_category() -> &'static str;
+pub struct DataAPI<T>
+where T :  Serialize+for<'de>  Deserialize<'de>+Clone{
+    pub host: String,
+    pub category: String,
+    pub auth_key: Option<String>,
+    phantom_data: PhantomData<T>
+}
 
 
-    /// used to authenticate
-    fn get_auth_key() -> &'static str{""}
+
+
+impl<T> DataAPI<T>
+where T :  Serialize+for<'de>  Deserialize<'de>+Clone
+{
+    pub fn new(host: String, category: String)->Self{
+        Self{
+            host,
+            category,
+            auth_key: None,
+            phantom_data: Default::default(),
+        }
+    }
+
+    fn get_auth_header(&self)-> String{
+        let key = match &self.auth_key{
+            None => "".to_string(),
+            Some(s) => s.to_string(),
+        };
+        key
+
+    }
 
     fn get_client() -> anyhow::Result<Client> {
         let mut builder = Client::builder();
@@ -44,12 +63,12 @@ pub trait IData {
             .build().context("failed to build client")?)
     }
 
-    async fn insert(data: &Self::Model) -> anyhow::Result<RawData> {
-        ensure!(!Self::get_category().is_empty());
+    pub async fn insert(&self, data: &T) -> anyhow::Result<RawData> {
+        ensure!(!self.category.is_empty());
         let client = Self::get_client()?;
 
-        let response = client.post(format!("{}/data/cat/{}", Self::get_host(), Self::get_category()))
-            .header("X-Browser-Fingerprint", Self::get_auth_key())
+        let response = client.post(format!("{}/data/cat/{}", self.host, self.category))
+            .header("X-Browser-Fingerprint", self.get_auth_header())
             .json(data).send().await?;
         if response.status().is_success(){
             let r: Vec<RawData> = response.json().await?;
@@ -59,12 +78,12 @@ pub trait IData {
         }
 
     }
-    async fn delete( id: i64) -> anyhow::Result<RawData> {
-        ensure!(!Self::get_category().is_empty());
+    pub async fn delete( &self, id: i64) -> anyhow::Result<RawData> {
+        ensure!(!self.category.is_empty());
         let client = Self::get_client()?;
 
-        let response = client.delete(format!("{}/data/id/{}", Self::get_host(), id))
-            .header("X-Browser-Fingerprint", Self::get_auth_key()).send().await?;
+        let response = client.delete(format!("{}/data/id/{}", self.host, id))
+            .header("X-Browser-Fingerprint", self.get_auth_header()).send().await?;
         if response.status().is_success(){
             let r: Vec<RawData> = response.json().await?;
             Ok(r[0].clone())
@@ -73,12 +92,12 @@ pub trait IData {
         }
 
     }
-    async fn update_full( id: i64, data: &Self::Model) -> anyhow::Result<RawData> {
-        ensure!(!Self::get_category().is_empty());
+    pub async fn update_full(&self, id: i64, data: &T) -> anyhow::Result<RawData> {
+        ensure!(!self.category.is_empty());
         let client = Self::get_client()?;
 
-        let response = client.put(format!("{}/data/id/{}", Self::get_host(), id))
-            .header("X-Browser-Fingerprint", Self::get_auth_key())
+        let response = client.put(format!("{}/data/id/{}", self.host, id))
+            .header("X-Browser-Fingerprint", self.get_auth_header())
             .json(data)
             .send().await?;
         if response.status().is_success(){
@@ -88,13 +107,13 @@ pub trait IData {
             bail!(response.text().await?)
         }
     }
-    async fn update_field( id: i64, field_param: (&str,&str)) -> anyhow::Result<RawData> {
-        ensure!(!Self::get_category().is_empty());
+    pub async fn update_field(&self, id: i64, field_param: (&str,&str)) -> anyhow::Result<RawData> {
+        ensure!(!self.category.is_empty());
         let client = Self::get_client()?;
 
-        let response = client.patch(format!("{}/data/id/{}", Self::get_host(), id))
+        let response = client.patch(format!("{}/data/id/{}", self.host, id))
             .query(&[field_param])
-            .header("X-Browser-Fingerprint", Self::get_auth_key())
+            .header("X-Browser-Fingerprint", self.get_auth_header())
             .send().await?;
         if response.status().is_success(){
             let r: Vec<RawData> = response.json().await?;
@@ -103,17 +122,17 @@ pub trait IData {
             bail!(response.text().await?)
         }
     }
-    async fn get( id: i64) -> anyhow::Result<Self::Model> {
-        ensure!(!Self::get_category().is_empty());
+    pub async fn get( &self,id: i64) -> anyhow::Result<T> {
+        ensure!(!self.category.is_empty());
         let client = Self::get_client()?;
 
-        let response = client.get(format!("{}/data/cat/{}/id/{}", Self::get_host(), Self::get_category(), id))
-            .header("X-Browser-Fingerprint", Self::get_auth_key())
+        let response = client.get(format!("{}/data/cat/{}/id/{}", self.host, self.category, id))
+            .header("X-Browser-Fingerprint", self.get_auth_header())
             .send().await?;
         if response.status().is_success(){
             let r: Vec<RawData> = response.json().await?;
 
-            let data_list = r.iter().map(|m| serde_json::from_str::<Self::Model>(&m.data).unwrap()).collect::<Vec<Self::Model>>();
+            let data_list = r.iter().map(|m| serde_json::from_str::<T>(&m.data).unwrap()).collect::<Vec<T>>();
             if data_list.is_empty(){
                 bail!("id : {} not found!" , id)
             }
@@ -123,17 +142,17 @@ pub trait IData {
             bail!(response.text().await?)
         }
     }
-    async fn list( limit: u32) -> anyhow::Result<Vec<Self::Model>> {
-        let raw_data = Self::list_raw(limit).await?;
-        Ok(raw_data.iter().map(|m|m.to::<Self::Model>().unwrap()).collect())
+    pub async fn list( &self,limit: u32) -> anyhow::Result<Vec<T>> {
+        let raw_data = self.list_raw(limit).await?;
+        Ok(raw_data.iter().map(|m|m.to::<T>().unwrap()).collect())
     }
-    async fn list_raw(limit: u32) -> anyhow::Result<Vec<RawData>> {
-        ensure!(!Self::get_category().is_empty());
+    pub async fn list_raw(&self,limit: u32) -> anyhow::Result<Vec<RawData>> {
+        ensure!(!self.category.is_empty());
         let client = Self::get_client()?;
 
-        let response = client.get(format!("{}/data/cat/{}", Self::get_host(), Self::get_category()))
+        let response = client.get(format!("{}/data/cat/{}", self.host, self.category))
             .query(&[("_limit", limit)])
-            .header("X-Browser-Fingerprint", Self::get_auth_key())
+            .header("X-Browser-Fingerprint", self.get_auth_header())
             .send().await?;
         if response.status().is_success(){
             let r: Vec<RawData> = response.json().await?;
