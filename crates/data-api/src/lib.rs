@@ -1,71 +1,58 @@
 pub mod data;
-
+pub use data_api_macro::*;
 #[cfg(test)]
 mod tests {
     use std::thread;
     use serde::{Deserialize, Serialize};
-    use crate::data::IData;
+    use crate::data::DataAPI;
     use super::*;
 
-    #[derive(Serialize, Deserialize, Debug, Clone)]
+
+    #[data_model]
+    #[derive(Serialize, Deserialize, Debug, Clone, Default)]
     struct Demo{
-        id : i32,
         name: String,
-    }
-
-    struct DemoAPI;
-
-    impl IData for DemoAPI{
-        type Model = Demo;
-
-        fn get_host(&self) -> &'static str {
-            "http://127.0.0.1:9000"
-        }
-
-        fn get_category(&self) -> &'static str {
-            "demo"
-        }
-
-        fn get_auth_key(&self) -> &'static str {
-            ""
-        }
     }
 
     #[tokio::test]
     async fn test_insert()->anyhow::Result<()> {
-        let api = DemoAPI;
-        let r = api.insert(&Demo{ id: 456, name: "demo name222".to_string() } ).await?;
+        let api = DataAPI::<Demo>::new("http:127.0.0.1:9000", "demo",None);
+        let r = api.insert(&Demo{ name: "demo name222".to_string(), ..Default::default() } ).await?;
         println!("{:?}", r);
 
         Ok(())
     }
     #[tokio::test]
     async fn test_delete()->anyhow::Result<()> {
-        let api = DemoAPI;
-        let r = api.delete(502).await?;
+        let api = DataAPI::<Demo>::new("http:127.0.0.1:9000", "demo",None);
+
+        let r = api.delete(9759).await?;
         println!("{:?}", r);
 
         Ok(())
     }
     #[tokio::test]
     async fn test_update_full()->anyhow::Result<()> {
-        let api = DemoAPI;
-        let r = api.update_full(501, &Demo{ id: 1, name: "501 name".to_string() }).await?;
+        let api = DataAPI::<Demo>::new("http:127.0.0.1:9000", "demo",None);
+
+        let r = api.update_full(9760, &Demo{ name: "501 name".to_string(), ..Default::default() }).await?;
         println!("{:?}", r);
 
         Ok(())
     }
     #[tokio::test]
     async fn test_update_field()->anyhow::Result<()> {
-        let api = DemoAPI;
-        let r = api.update_field(501, ("name2", "502 name")).await?;
+        let api = DataAPI::<Demo>::new("http:127.0.0.1:9000", "demo",None);
+
+        let r = api.update_field(9760, ("name", "502 name")).await?;
         println!("{:?}", r);
 
         Ok(())
     }
     #[tokio::test]
     async fn test_query_by_id()->anyhow::Result<()> {
-        let api = DemoAPI;
+        let api = DataAPI::<Demo>::new("http:127.0.0.1:9000", "demo",None);
+
         let r = api.get(500).await?;
         println!("{:?}", r);
 
@@ -73,7 +60,8 @@ mod tests {
     }
     #[tokio::test]
     async fn test_query_by_category()->anyhow::Result<()> {
-        let api = DemoAPI;
+        let api = DataAPI::<Demo>::new("http:127.0.0.1:9000", "demo",None);
+
         let r = api.list(100).await?;
         println!("{:?}", r);
 

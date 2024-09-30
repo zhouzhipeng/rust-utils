@@ -3,6 +3,7 @@ use anyhow::{anyhow, bail, ensure, Context};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
+use serde_json::{json, Value};
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct RawData{
@@ -20,6 +21,7 @@ impl RawData {
     }
 }
 
+#[derive(Clone, Debug, Default)]
 pub struct DataAPI<T>
 where T :  Serialize+for<'de>  Deserialize<'de>+Clone{
     pub host: String,
@@ -63,7 +65,7 @@ where T :  Serialize+for<'de>  Deserialize<'de>+Clone
             .build().context("failed to build client")?)
     }
 
-    pub async fn insert(&self, data: &T) -> anyhow::Result<RawData> {
+    pub async fn insert(&self, data: &T) -> anyhow::Result<T> {
         ensure!(!self.category.is_empty());
         let client = Self::get_client()?;
 
@@ -72,13 +74,25 @@ where T :  Serialize+for<'de>  Deserialize<'de>+Clone
             .json(data).send().await?;
         if response.status().is_success(){
             let r: Vec<RawData> = response.json().await?;
-            Ok(r[0].clone())
+            let t = Self::populate_sys_fields(&r[0])?;
+
+            Ok(t)
         }else{
             bail!(response.text().await?)
         }
 
     }
-    pub async fn delete( &self, id: i64) -> anyhow::Result<RawData> {
+
+    fn populate_sys_fields(data: &RawData) -> anyhow::Result<T> {
+        let mut value = serde_json::from_str::<Value>(&data.data)?;
+        value["id"] = json!(&data.id);
+        value["created"] = json!(&data.created);
+        value["updated"] = json!(&data.updated);
+        let t = serde_json::from_value::<T>(value)?;
+        Ok(t)
+    }
+
+    pub async fn delete( &self, id: i64) -> anyhow::Result<T> {
         ensure!(!self.category.is_empty());
         let client = Self::get_client()?;
 
@@ -86,13 +100,13 @@ where T :  Serialize+for<'de>  Deserialize<'de>+Clone
             .header("X-Browser-Fingerprint", self.get_auth_header()).send().await?;
         if response.status().is_success(){
             let r: Vec<RawData> = response.json().await?;
-            Ok(r[0].clone())
+            Ok(Self::populate_sys_fields(&r[0])?)
         }else{
             bail!(response.text().await?)
         }
 
     }
-    pub async fn update_full(&self, id: i64, data: &T) -> anyhow::Result<RawData> {
+    pub async fn update_full(&self, id: i64, data: &T) -> anyhow::Result<T> {
         ensure!(!self.category.is_empty());
         let client = Self::get_client()?;
 
@@ -102,12 +116,12 @@ where T :  Serialize+for<'de>  Deserialize<'de>+Clone
             .send().await?;
         if response.status().is_success(){
             let r: Vec<RawData> = response.json().await?;
-            Ok(r[0].clone())
+            Ok(Self::populate_sys_fields(&r[0])?)
         }else{
             bail!(response.text().await?)
         }
     }
-    pub async fn update_field(&self, id: i64, field_param: (&str,&str)) -> anyhow::Result<RawData> {
+    pub async fn update_field(&self, id: i64, field_param: (&str,&str)) -> anyhow::Result<T> {
         ensure!(!self.category.is_empty());
         let client = Self::get_client()?;
 
@@ -117,7 +131,7 @@ where T :  Serialize+for<'de>  Deserialize<'de>+Clone
             .send().await?;
         if response.status().is_success(){
             let r: Vec<RawData> = response.json().await?;
-            Ok(r[0].clone())
+            Ok(Self::populate_sys_fields(&r[0])?)
         }else{
             bail!(response.text().await?)
         }
@@ -131,12 +145,12 @@ where T :  Serialize+for<'de>  Deserialize<'de>+Clone
             .send().await?;
         if response.status().is_success(){
             let r: Vec<RawData> = response.json().await?;
-
-            let data_list = r.iter().map(|m| serde_json::from_str::<T>(&m.data).unwrap()).collect::<Vec<T>>();
-            if data_list.is_empty(){
-                bail!("id : {} not found!" , id)
+            if !r.is_empty(){
+                Ok(Self::populate_sys_fields(&r[0])?)
+            }else{
+                bail!("not found!")
             }
-            Ok(data_list[0].clone())
+
 
         }else{
             bail!(response.text().await?)
@@ -144,7 +158,7 @@ where T :  Serialize+for<'de>  Deserialize<'de>+Clone
     }
     pub async fn list( &self,limit: u32) -> anyhow::Result<Vec<T>> {
         let raw_data = self.list_raw(limit).await?;
-        Ok(raw_data.iter().map(|m|m.to::<T>().unwrap()).collect())
+        Ok(raw_data.iter().map(|m|Self::populate_sys_fields(&m).unwrap()).collect())
     }
     pub async fn list_raw(&self,limit: u32) -> anyhow::Result<Vec<RawData>> {
         ensure!(!self.category.is_empty());

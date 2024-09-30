@@ -8,6 +8,7 @@ reqwest = { version = "0.12", features = ["json"] }
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 anyhow = "1.0"
+data-api-macro= {path="../data-api-macro"}
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }
