@@ -60,9 +60,10 @@ mod tests {
     }
     #[tokio::test]
     async fn test_query_by_category()->anyhow::Result<()> {
-        let api = DataAPI::<Demo>::new("http:127.0.0.1:9000", "demo",None);
+        // let api = DataAPI::<Demo>::new("http:127.0.0.1:9000", "demo",None);
 
-        let r = api.list(100).await?;
+        // let r = api.list(100).await?;
+        let r =reqwest::get("http://127.0.0.1:9000/data/cat/demo").await?.text().await?;
         println!("{:?}", r);
 
         Ok(())
