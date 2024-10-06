@@ -106,6 +106,20 @@ where T :  Serialize+for<'de>  Deserialize<'de>+Clone
         }
 
     }
+
+    pub async fn delete_by_cat( &self) -> anyhow::Result<()> {
+        ensure!(!self.category.is_empty());
+        let client = Self::get_client()?;
+
+        let response = client.delete(format!("{}/data/cat/{}", self.host, self.category))
+            .header("X-Browser-Fingerprint", self.get_auth_header()).send().await?;
+        if response.status().is_success(){
+            Ok(())
+        }else{
+            bail!(response.text().await?)
+        }
+
+    }
     pub async fn update_full(&self, id: i64, data: &T) -> anyhow::Result<T> {
         ensure!(!self.category.is_empty());
         let client = Self::get_client()?;
@@ -160,6 +174,7 @@ where T :  Serialize+for<'de>  Deserialize<'de>+Clone
         let raw_data = self.list_raw(limit).await?;
         Ok(raw_data.iter().map(|m|Self::populate_sys_fields(&m).unwrap()).collect())
     }
+
     pub async fn list_raw(&self,limit: u32) -> anyhow::Result<Vec<RawData>> {
         ensure!(!self.category.is_empty());
         let client = Self::get_client()?;
@@ -171,6 +186,21 @@ where T :  Serialize+for<'de>  Deserialize<'de>+Clone
         if response.status().is_success(){
             let r: Vec<RawData> = response.json().await?;
             Ok(r)
+
+        }else{
+            bail!(response.text().await?)
+        }
+    }
+    pub async fn count(&self) -> anyhow::Result<i64> {
+        ensure!(!self.category.is_empty());
+        let client = Self::get_client()?;
+
+        let response = client.get(format!("{}/data/cat/{}/count", self.host, self.category))
+            .header("X-Browser-Fingerprint", self.get_auth_header())
+            .send().await?;
+        if response.status().is_success(){
+            let r = response.text().await?;
+            Ok(r.parse::<i64>()?)
 
         }else{
             bail!(response.text().await?)
