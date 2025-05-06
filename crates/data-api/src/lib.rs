@@ -7,7 +7,6 @@ mod tests {
     use super::*;
 
 
-    #[data_model]
     #[derive(Serialize, Deserialize, Debug, Clone, Default)]
     struct Demo{
         name: String,
@@ -15,8 +14,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_insert()->anyhow::Result<()> {
-        let api = DataAPI::<Demo>::new("http:127.0.0.1:9000", "demo",None);
-        let r = api.insert(&Demo{ name: "demo name222".to_string(), ..Default::default() } ).await?;
+        let api = DataAPI::<Demo>::new("http://127.0.0.1:3000", "demo",None);
+        let r = api.insert(&Demo{ name: "demo name222".to_string(), ..Default::default() } ).await;
         println!("{:?}", r);
 
         Ok(())
