@@ -1,5 +1,4 @@
 pub mod data;
-pub use data_api_macro::*;
 #[cfg(test)]
 mod tests {
     use std::thread;
