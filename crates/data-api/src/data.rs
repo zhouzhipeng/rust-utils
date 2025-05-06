@@ -69,7 +69,7 @@ where T :  Serialize+for<'de>  Deserialize<'de>+Clone
         ensure!(!self.category.is_empty());
         let client = Self::get_client()?;
 
-        let response = client.post(format!("{}/data/cat/{}", self.host, self.category))
+        let response = client.post(format!("{}/api/v2/data/{}", self.host, self.category))
             .header("X-Browser-Fingerprint", self.get_auth_header())
             .json(data).send().await?;
         if response.status().is_success(){
