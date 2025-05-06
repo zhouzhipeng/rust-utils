@@ -20,11 +20,29 @@ mod tests {
 
         Ok(())
     }
+
+    #[tokio::test]
+    async fn test_count()->anyhow::Result<()> {
+        let api = DataAPI::<Demo>::new("http://127.0.0.1:3000", "demo",None);
+        let r = api.count().await;
+        println!("{:?}", r);
+
+        Ok(())
+    }
     #[tokio::test]
     async fn test_delete()->anyhow::Result<()> {
         let api = DataAPI::<Demo>::new("http:127.0.0.1:9000", "demo",None);
 
         let r = api.delete(9759).await?;
+        println!("{:?}", r);
+
+        Ok(())
+    }
+    #[tokio::test]
+    async fn test_delete_by_cat()->anyhow::Result<()> {
+        let api = DataAPI::<Demo>::new("http:127.0.0.1:3000", "demo",None);
+
+        let r = api.delete_by_cat().await?;
         println!("{:?}", r);
 
         Ok(())

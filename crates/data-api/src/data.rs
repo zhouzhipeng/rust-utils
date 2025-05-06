@@ -105,14 +105,14 @@ where T :  Serialize+for<'de>  Deserialize<'de>+Clone
 
     }
 
-    pub async fn delete_by_cat( &self) -> anyhow::Result<()> {
+    pub async fn delete_by_cat( &self) -> anyhow::Result<u32> {
         ensure!(!self.category.is_empty());
         let client = Self::get_client()?;
 
-        let response = client.delete(format!("{}/data/cat/{}", self.host, self.category))
+        let response = client.get(format!("{}/api/v2/data/{}/delete?delete_all=true&hard_delete=true", self.host, self.category))
             .header("X-Browser-Fingerprint", self.get_auth_header()).send().await?;
         if response.status().is_success(){
-            Ok(())
+            Ok(response.text().await?.parse::<u32>()?)
         }else{
             bail!(response.text().await?)
         }
@@ -193,7 +193,7 @@ where T :  Serialize+for<'de>  Deserialize<'de>+Clone
         ensure!(!self.category.is_empty());
         let client = Self::get_client()?;
 
-        let response = client.get(format!("{}/data/cat/{}/count", self.host, self.category))
+        let response = client.get(format!("{}/api/v2/data/{}/query?count=true", self.host, self.category))
             .header("X-Browser-Fingerprint", self.get_auth_header())
             .send().await?;
         if response.status().is_success(){
