@@ -73,10 +73,8 @@ where T :  Serialize+for<'de>  Deserialize<'de>+Clone
             .header("X-Browser-Fingerprint", self.get_auth_header())
             .json(data).send().await?;
         if response.status().is_success(){
-            let r: Vec<RawData> = response.json().await?;
-            let t = Self::populate_sys_fields(&r[0])?;
-
-            Ok(t)
+            let r: T = response.json().await?;
+            Ok(r)
         }else{
             bail!(response.text().await?)
         }
